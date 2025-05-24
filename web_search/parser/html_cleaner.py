@@ -15,9 +15,11 @@ class HtmlCleaner:
             str: 清理后的HTML内容
         """
         # 预处理：移除JavaScript注释和CDATA标签
-        html_content = re.sub(r'//.*?[\r\n]', '\n', html_content)  # 移除单行JavaScript注释
+        html_content = re.sub(r'<!--.*?-->', '', html_content, flags=re.DOTALL)  # 移除HTML注释
+        html_content = re.sub(r'//.*?[\r\n]', '', html_content)  # 移除单行JavaScript注释
         html_content = re.sub(r'/\*.*?\*/', '', html_content, flags=re.DOTALL)  # 移除多行JavaScript注释
         html_content = re.sub(r'<!\[CDATA\[.*?\]\]>', '', html_content, flags=re.DOTALL)  # 移除CDATA标签
+        print(html_content)
 
         # 使用BeautifulSoup解析HTML
         soup = BeautifulSoup(html_content, 'html.parser')
@@ -28,6 +30,10 @@ class HtmlCleaner:
 
         for tag in soup.find_all(True):
             tag.attrs = {k: v for k, v in tag.attrs.items() if k in ['src']}
+        for tag in soup.find_all(True):
+            # 判断如果当前标签下面的字符串不存在，则移除该标签
+            if not tag.get_text():
+                tag.decompose()
 
         # 从根节点开始清理
         cleaned_soup = soup.html
